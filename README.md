@@ -35,7 +35,9 @@ host or subfolder.
 - `src/levels.ts` builds each level the same way Planarity does: draw some
   random lines, put a dot wherever two lines cross, and join dots that sit
   next to each other on a line. This means every level can be solved. A fixed
-  seed makes each level the same every time. The macarons start on a shuffled circle.
+  seed makes each level the same every time. The pastries start scattered at
+  random (spaced apart, not sitting on a line). A few scatters are tried and
+  the most tangled one is kept.
 - `src/game.ts` holds the game state, the rules, dragging (mouse and touch) and
   the animation loop. Something counts as a problem when two lines cross, a
   macaron sits on a line it doesn't belong to, or two macarons overlap.

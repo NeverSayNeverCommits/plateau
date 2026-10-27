@@ -1,4 +1,4 @@
-import { segmentsIntersect, type Vec } from "./geometry.ts";
+import { distToSegment, segmentsIntersect, type Vec } from "./geometry.ts";
 
 export type Edge = [number, number];
 
@@ -106,29 +106,140 @@ function countCrossings(points: Vec[], edges: Edge[]): number {
   return count;
 }
 
-/** Put the dots on a circle in a shuffled order, which tangles them up nicely. */
-function scrambledCircle(nodeCount: number, edges: Edge[], rng: () => number): Vec[] {
-  for (let attempt = 0; ; attempt++) {
-    const order = Array.from({ length: nodeCount }, (_, i) => i);
-    for (let i = order.length - 1; i > 0; i--) {
-      const j = Math.floor(rng() * (i + 1));
-      [order[i], order[j]] = [order[j], order[i]];
-    }
+/** A dot closer than this to a line it isn't part of looks like it sits on that line (0..1 board units). */
+const LINE_GAP = 0.025;
 
-    const points: Vec[] = new Array(nodeCount);
-    order.forEach((node, slot) => {
-      const angle = (slot / nodeCount) * Math.PI * 2 - Math.PI / 2;
-      points[node] = { x: 0.5 + 0.45 * Math.cos(angle), y: 0.5 + 0.45 * Math.sin(angle) };
-    });
-
-    // Make sure the level does not start out already solved.
-    if (countCrossings(points, edges) > 0 || attempt > 100) return points;
+/** Shortest distance from p to any other point. */
+function nearest(p: Vec, points: Vec[], skip: number): number {
+  let best = Infinity;
+  for (let i = 0; i < points.length; i++) {
+    if (i !== skip) best = Math.min(best, Math.hypot(p.x - points[i].x, p.y - points[i].y));
   }
+  return best;
+}
+
+const randomSpot = (rng: () => number): Vec => ({ x: 0.02 + rng() * 0.96, y: 0.02 + rng() * 0.96 });
+
+/** Scatter dots at random, keeping every pair at least `gap` apart so none start hidden under another. */
+function scatter(nodeCount: number, rng: () => number): Vec[] {
+  let gap = Math.min(0.2, 0.62 / Math.sqrt(nodeCount));
+  for (;;) {
+    const points: Vec[] = [];
+    for (let i = 0; i < nodeCount; i++) {
+      for (let t = 0; t < 400; t++) {
+        const p = randomSpot(rng);
+        if (nearest(p, points, -1) >= gap) {
+          points.push(p);
+          break;
+        }
+      }
+      if (points.length <= i) break;
+    }
+    if (points.length === nodeCount) return points;
+    gap *= 0.9; // too crowded: relax and start again
+  }
+}
+
+/**
+ * Number of "dot sitting on a line" problems that involve dot v:
+ * v on top of someone else's line, or someone else on top of v's lines.
+ */
+function lineConflicts(points: Vec[], edges: Edge[], edgesOf: number[][], v: number): number {
+  let count = 0;
+  for (const [a, b] of edges) {
+    if (a !== v && b !== v && distToSegment(points[v], points[a], points[b]) < LINE_GAP) count++;
+  }
+  for (const e of edgesOf[v]) {
+    const [a, b] = edges[e];
+    for (let u = 0; u < points.length; u++) {
+      if (u !== a && u !== b && distToSegment(points[u], points[a], points[b]) < LINE_GAP) count++;
+    }
+  }
+  return count;
+}
+
+/** Number of crossings that involve one of dot v's lines. */
+function crossingsOf(points: Vec[], edges: Edge[], edgesOf: number[][], v: number): number {
+  let count = 0;
+  for (const e of edgesOf[v]) {
+    const [a, b] = edges[e];
+    for (const [c, d] of edges) {
+      if (a === c || a === d || b === c || b === d) continue;
+      if (segmentsIntersect(points[a], points[b], points[c], points[d])) count++;
+    }
+  }
+  return count;
+}
+
+/**
+ * Move dots off lines they don't belong to (a dot on a line looks connected when it isn't).
+ * Each move only ever lowers the number of problems, and the work is capped, so it is quick.
+ * Among the spots that fix things, the one that keeps the most crossings is picked,
+ * so tidying does not quietly make the level easier.
+ * On the biggest levels a few may be left: the lines cover nearly the whole board there.
+ */
+function tidy(points: Vec[], edges: Edge[], rng: () => number): void {
+  const n = points.length;
+  const gap = Math.min(0.2, 0.62 / Math.sqrt(n)) * 0.8;
+  const edgesOf: number[][] = Array.from({ length: n }, () => []);
+  edges.forEach(([a, b], i) => {
+    edgesOf[a].push(i);
+    edgesOf[b].push(i);
+  });
+
+  for (let pass = 0; pass < 4; pass++) {
+    let changed = false;
+    for (let v = 0; v < n; v++) {
+      let bestCount = lineConflicts(points, edges, edgesOf, v);
+      if (bestCount === 0) continue;
+      const original = points[v];
+      let best = original;
+      let bestCrossings = -1;
+      for (let t = 0; t < 40; t++) {
+        const p = randomSpot(rng);
+        if (nearest(p, points, v) < gap) continue;
+        points[v] = p;
+        const count = lineConflicts(points, edges, edgesOf, v);
+        if (count > bestCount) continue;
+        const crossings = crossingsOf(points, edges, edgesOf, v);
+        if (count < bestCount || crossings > bestCrossings) {
+          best = p;
+          bestCount = count;
+          bestCrossings = crossings;
+        }
+      }
+      points[v] = best;
+      if (best !== original) changed = true;
+    }
+    if (!changed) break;
+  }
+}
+
+/**
+ * Starting layout: dots scattered at random over the board.
+ * A few scatters are tried and the most tangled one is kept, so no level starts easy by luck.
+ */
+function tangledLayout(nodeCount: number, edges: Edge[], rng: () => number): Vec[] {
+  const tries = Math.max(3, Math.ceil(60 / nodeCount));
+  let best: Vec[] = [];
+  let bestCrossings = -1;
+  for (let i = 0; i < tries; i++) {
+    const points = scatter(nodeCount, rng);
+    const crossings = countCrossings(points, edges);
+    if (crossings > bestCrossings) {
+      best = points;
+      bestCrossings = crossings;
+    }
+  }
+  tidy(best, edges, rng);
+  // Make sure the level does not start out already solved.
+  if (countCrossings(best, edges) === 0) return tangledLayout(nodeCount, edges, rng);
+  return best;
 }
 
 export function buildLevel(index: number): Level {
   const rng = mulberry32(1337 + index * 7919);
   const { nodeCount, edges } = buildGraph(LINES_PER_LEVEL[index], rng);
-  const start = scrambledCircle(nodeCount, edges, rng);
+  const start = tangledLayout(nodeCount, edges, rng);
   return { nodeCount, edges, start };
 }
