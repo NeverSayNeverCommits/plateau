@@ -7,7 +7,7 @@ Each level is a different pastry: macaron, éclair, croissant, mille-feuille,
 Paris-Brest, Saint-Honoré and croquembouche. Drag the pastries until no
 chocolate lines cross. A pastry's glaze turns **pistachio green** (and it
 smiles) once none of its lines cross anything. When every pastry is green,
-the level is done.
+the level is done. Finish all seven for a jammy surprise.
 
 A little French café waltz plays in the background. The ♫ button turns it
 off, and the speaker button turns off the sound effects.
@@ -50,6 +50,10 @@ host or subfolder.
 - `src/music.ts` is the background music: an original valse musette (accordion
   with three slightly detuned reeds, oom-pah-pah bass and chords), played live
   with WebAudio. Edit the `MELODY` and `CHORDS` lists to change the tune.
+- `src/finale.ts` is the "Congrats Jam!" finale after the last level: jam
+  pours and drips down, splats land, fireworks go off, and you can tap to
+  throw more jam. To see it while running `npm run dev`, type
+  `plateauDebug.win()` in the browser console.
 - `src/theme.ts` has the colours, flavours, the pastry for each level and the praise lines.
 - `src/main.ts` connects the header, level intro and win banner. Progress
   and the mute setting are saved in localStorage.

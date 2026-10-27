@@ -3,6 +3,7 @@ import "@fontsource/fredoka/latin-600.css";
 import "@fontsource/pacifico/latin-400.css";
 import "./style.css";
 import { sound } from "./audio.ts";
+import { JamFinale } from "./finale.ts";
 import { Game, type Status } from "./game.ts";
 import { LEVEL_COUNT, buildLevel } from "./levels.ts";
 import { PRAISE, levelName, levelTheme } from "./theme.ts";
@@ -59,6 +60,8 @@ const banner = $("banner");
 const bannerTitle = $("banner-title");
 const bannerSub = $("banner-sub");
 const bannerNext = $<HTMLButtonElement>("banner-next");
+const finale = new JamFinale($("finale"));
+const finaleSub = $("finale-sub");
 
 const progress = loadProgress();
 let current = progress.unlocked;
@@ -75,6 +78,7 @@ function bump(el: HTMLElement): void {
 function hideBanner(): void {
   clearTimeout(bannerTimer);
   banner.classList.add("hidden");
+  finale.hide();
 }
 
 function refreshNav(): void {
@@ -110,7 +114,7 @@ function onWin(moves: number): void {
   refreshNav();
 
   const isLast = current + 1 >= LEVEL_COUNT;
-  bannerTitle.textContent = isLast ? "Chef extraordinaire !" : PRAISE[Math.floor(Math.random() * PRAISE.length)];
+  bannerTitle.textContent = isLast ? "Congrats Jam!" : PRAISE[Math.floor(Math.random() * PRAISE.length)];
   let sub = `${levelName(current)} untangled in ${moves} moves`;
   if (prevBest !== undefined) sub += newBest ? " · new best!" : ` · best ${prevBest}`;
   if (isLast) sub = `Every pastry untangled! (${moves} moves)`;
@@ -118,8 +122,16 @@ function onWin(moves: number): void {
   bannerNext.textContent = isLast ? "Start over ↻" : "Next level →";
 
   // Let the confetti fly first, then slide the banner in.
+  // After the last level the jam finale comes in instead.
   clearTimeout(bannerTimer);
-  bannerTimer = window.setTimeout(() => banner.classList.remove("hidden"), 650);
+  if (isLast) {
+    let note = `${levelName(current)} done in ${moves} moves`;
+    if (prevBest !== undefined) note += newBest ? " · new best!" : ` · best ${prevBest}`;
+    finaleSub.textContent = note;
+    bannerTimer = window.setTimeout(() => finale.show(), 650);
+  } else {
+    bannerTimer = window.setTimeout(() => banner.classList.remove("hidden"), 650);
+  }
 }
 
 const game = new Game(canvas, { onStatus, onWin });
@@ -164,6 +176,12 @@ resetBtn.addEventListener("click", () => {
   game.reset();
 });
 bannerNext.addEventListener("click", () => goTo(current + 1 >= LEVEL_COUNT ? 0 : current + 1));
+$("finale-again").addEventListener("click", () => goTo(0));
+// Close the finale but keep the "Start over" banner, so the solved table can be admired.
+$("finale-close").addEventListener("click", () => {
+  finale.hide();
+  banner.classList.remove("hidden");
+});
 muteBtn.addEventListener("click", () => {
   sound.setMuted(!sound.muted);
   updateMuteButton();
@@ -180,6 +198,10 @@ for (const type of ["pointerdown", "keydown"]) {
 intro.addEventListener("animationend", () => intro.classList.add("hidden"));
 
 window.addEventListener("keydown", (e) => {
+  if (finale.open) {
+    if (e.key === "Escape") $("finale-close").click();
+    return;
+  }
   if (e.key === "r" || e.key === "R") resetBtn.click();
   if (e.key === "ArrowLeft" && !prevBtn.disabled) prevBtn.click();
   if (e.key === "ArrowRight" && !nextBtn.disabled) nextBtn.click();
@@ -187,3 +209,16 @@ window.addEventListener("keydown", (e) => {
 
 updateMuteButton();
 goTo(current);
+
+// For trying out the finale while developing: run plateauDebug.win() in the browser console.
+if (import.meta.env.DEV) {
+  Object.assign(window, {
+    plateauDebug: {
+      win: (moves = 99) => {
+        current = LEVEL_COUNT - 1;
+        refreshNav();
+        onWin(moves);
+      },
+    },
+  });
+}

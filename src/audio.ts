@@ -17,6 +17,7 @@ class Sound {
   private master: GainNode | null = null;
   private lastPlayed = new Map<string, number>();
   private readonly music = new Music();
+  private noiseBuffer: AudioBuffer | null = null;
   muted = readFlag(MUTE_KEY, false);
   musicOn = readFlag(MUSIC_KEY, true);
 
@@ -128,6 +129,85 @@ class Sound {
     });
     this.tone({ freq: this.note(7), duration: 0.9, volume: 0.12, type: "sine", delay: 0.5 });
     this.tone({ freq: this.note(9), duration: 0.9, volume: 0.1, type: "sine", delay: 0.5 });
+  }
+
+  /** Filtered white noise: for splats, swishes and pops. */
+  private noise(opts: { duration: number; volume: number; from: number; to: number; delay?: number; type?: BiquadFilterType }): void {
+    if (this.muted || !this.ctx || !this.master) return;
+    const ctx = this.ctx;
+    if (!this.noiseBuffer) {
+      this.noiseBuffer = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+      const data = this.noiseBuffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    }
+    const t0 = ctx.currentTime + (opts.delay ?? 0);
+    const src = ctx.createBufferSource();
+    src.buffer = this.noiseBuffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = opts.type ?? "lowpass";
+    filter.frequency.setValueAtTime(opts.from, t0);
+    filter.frequency.exponentialRampToValueAtTime(opts.to, t0 + opts.duration);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(opts.volume, t0 + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + opts.duration);
+    src.connect(filter).connect(gain).connect(this.master);
+    src.start(t0, Math.random() * 0.5);
+    src.stop(t0 + opts.duration + 0.05);
+  }
+
+  /** A wet "splat" of jam. `size` around 1 is a normal splat. */
+  splat(size = 1): void {
+    if (!this.allowed("splat", 40)) return;
+    const s = Math.max(0.5, Math.min(1.6, size));
+    this.noise({ duration: 0.18, volume: 0.32 * s, from: 2600, to: 260 });
+    this.tone({ freq: 210 / s, endFreq: 60, duration: 0.2, volume: 0.28 * s });
+  }
+
+  /** A tiny "plip" when a jam drop lands in the jam pool. */
+  plip(): void {
+    if (!this.allowed("plip", 110)) return;
+    const f = 520 + Math.random() * 300;
+    this.tone({ freq: f, endFreq: f * 2.1, duration: 0.07, volume: 0.05 });
+  }
+
+  /** Jam glugging out of the jar. */
+  pour(): void {
+    for (let i = 0; i < 6; i++) {
+      const f = 150 + Math.random() * 60;
+      this.tone({ freq: f, endFreq: f * 0.55, duration: 0.13, volume: 0.16, type: "triangle", delay: i * 0.12 });
+    }
+    this.noise({ duration: 1.1, volume: 0.07, from: 900, to: 300 });
+  }
+
+  /** A firework going off. */
+  pop(volume = 1): void {
+    if (!this.allowed("pop", 120)) return;
+    this.noise({ duration: 0.35, volume: 0.22 * volume, from: 5000, to: 400 });
+    this.tone({ freq: 140, endFreq: 50, duration: 0.25, volume: 0.22 * volume });
+    // Little crackles afterwards.
+    for (let i = 0; i < 4; i++) {
+      this.noise({ duration: 0.04, volume: 0.05 * volume, from: 7000, to: 3000, type: "highpass", delay: 0.25 + Math.random() * 0.35 });
+    }
+  }
+
+  /** The big tune for finishing the very last level. */
+  fanfare(): void {
+    this.music.duck(5);
+    const steps = [0, 2, 3, 5, 3, 5];
+    const beats = [0, 0.12, 0.24, 0.36, 0.6, 0.72];
+    steps.forEach((step, i) => {
+      const f = this.note(step);
+      this.tone({ freq: f, duration: 0.35, volume: 0.17, type: "triangle", delay: beats[i] });
+      this.tone({ freq: f * 2, duration: 0.2, volume: 0.05, delay: beats[i] });
+    });
+    // Held final chord, with a little sparkle on top.
+    for (const step of [0, 2, 3, 5]) {
+      this.tone({ freq: this.note(step), duration: 1.6, volume: 0.09, type: "triangle", delay: 0.9, attack: 0.02 });
+    }
+    for (let i = 0; i < 5; i++) {
+      this.tone({ freq: this.note(7 + (i % 4)) * 2, duration: 0.15, volume: 0.035, delay: 1 + i * 0.09 });
+    }
   }
 
   click(): void {

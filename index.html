@@ -54,6 +54,29 @@
       </div>
     </main>
 
+    <!-- Shown after the last level. The jam is drawn on the canvas by src/finale.ts. -->
+    <div id="finale" class="finale hidden" role="dialog" aria-labelledby="finale-title">
+      <canvas></canvas>
+      <div class="jar">
+        <div class="jar-body">
+          <div class="jar-lid" aria-hidden="true"><span class="twine"></span></div>
+          <div class="jar-label">
+            <span class="drip" style="--x: 14%; --h: 26px; --d: 0s" aria-hidden="true"></span>
+            <span class="drip" style="--x: 37%; --h: 14px; --d: 0.6s" aria-hidden="true"></span>
+            <span class="drip" style="--x: 71%; --h: 34px; --d: 0.3s" aria-hidden="true"></span>
+            <span class="drip" style="--x: 88%; --h: 18px; --d: 0.9s" aria-hidden="true"></span>
+            <span class="finale-kicker">All 7 levels untangled</span>
+            <h2 id="finale-title">Congrats Jam!</h2>
+            <p id="finale-sub">Every pastry untangled</p>
+            <div class="finale-buttons">
+              <button id="finale-again">Encore &#8635;</button>
+              <button id="finale-close" class="light">Admire the table</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -422,6 +422,261 @@ button.round {
   }
 }
 
+/* ---------- Finale (after the last level) ---------- */
+
+.finale {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: radial-gradient(ellipse at center, rgba(255, 248, 239, 0.25) 0%, rgba(110, 12, 40, 0.3) 100%);
+  animation: finale-fade 0.6s ease both;
+}
+
+.finale.hidden {
+  display: none;
+}
+
+@keyframes finale-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.finale canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: pointer;
+}
+
+/* Centred holder; the body inside does the squashy landing. */
+.jar {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(430px, 88vw);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.jar-body {
+  transform-origin: 50% 100%;
+  animation: jar-drop 0.9s cubic-bezier(0.4, 0, 0.6, 1) 1.2s both;
+}
+
+@keyframes jar-drop {
+  0% {
+    transform: translateY(-120vh) scale(0.9, 1.15);
+  }
+  55% {
+    transform: translateY(0) scale(1.18, 0.8);
+  }
+  70% {
+    transform: scale(0.94, 1.08);
+  }
+  85% {
+    transform: scale(1.03, 0.97);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+/* Red gingham cloth tied over the jar, with a scalloped edge. */
+.jar-lid {
+  position: relative;
+  z-index: 1;
+  width: 78%;
+  height: 46px;
+  margin: 0 auto -16px;
+  border-radius: 14px 14px 0 0;
+  background-color: #fff;
+  background-image:
+    linear-gradient(90deg, rgba(200, 20, 63, 0.55) 50%, transparent 50%),
+    linear-gradient(rgba(200, 20, 63, 0.55) 50%, transparent 50%);
+  background-size: 16px 16px;
+  -webkit-mask:
+    radial-gradient(circle 9px at 9px calc(100% - 9px), #000 97%, transparent) 0 0 / 18px 100% repeat-x,
+    linear-gradient(#000 0 0) 0 0 / 100% calc(100% - 9px) no-repeat;
+  mask:
+    radial-gradient(circle 9px at 9px calc(100% - 9px), #000 97%, transparent) 0 0 / 18px 100% repeat-x,
+    linear-gradient(#000 0 0) 0 0 / 100% calc(100% - 9px) no-repeat;
+}
+
+.twine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 17px;
+  height: 5px;
+  background: repeating-linear-gradient(45deg, #e2c595 0 3px, #b98f57 3px 6px);
+}
+
+.jar-label {
+  position: relative;
+  padding: 30px 22px 20px;
+  border-radius: 28px;
+  background: var(--cream);
+  border: 4px solid #c8143f;
+  box-shadow:
+    0 6px 0 #86092a,
+    0 22px 44px rgba(80, 10, 30, 0.4);
+  text-align: center;
+}
+
+/* Dashed stitching inside the label */
+.jar-label::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 2px dashed rgba(200, 20, 63, 0.3);
+  border-radius: 21px;
+  pointer-events: none;
+}
+
+/* Jam dripping off the bottom of the label */
+.drip {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: var(--x);
+  width: 11px;
+  height: var(--h);
+  background: #c8143f;
+  border-radius: 0 0 6px 6px;
+  transform-origin: 50% 0;
+  animation:
+    drip-in 1s ease-out calc(2s + var(--d)) both,
+    drip-stretch 3s ease-in-out calc(3s + var(--d)) infinite;
+}
+
+.drip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #c8143f;
+  box-shadow: inset 3px 3px 0 -1px rgba(255, 255, 255, 0.55);
+  transform: translateX(-50%);
+}
+
+@keyframes drip-in {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes drip-stretch {
+  50% {
+    transform: scaleY(1.35);
+  }
+}
+
+.finale-kicker {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #b08a6c;
+}
+
+#finale-title {
+  margin: 2px 0 6px;
+  font-family: "Pacifico", cursive;
+  font-weight: 400;
+  font-size: clamp(2.3rem, 10vw, 3.6rem);
+  line-height: 1.35;
+  color: #c8143f;
+  text-shadow:
+    0 3px 0 #86092a,
+    0 8px 14px rgba(134, 9, 42, 0.3);
+  white-space: nowrap;
+}
+
+/* Each letter plops in like a blob of jam, then keeps wobbling. */
+#finale-title .letter {
+  display: inline-block;
+  transform-origin: 50% 100%;
+  animation:
+    plop 0.7s cubic-bezier(0.3, 1.4, 0.5, 1) calc(1.9s + var(--i) * 60ms) both,
+    jelly 2.4s ease-in-out calc(3.2s + var(--i) * 90ms) infinite;
+}
+
+@keyframes plop {
+  0% {
+    opacity: 0;
+    transform: translateY(-90px) scale(0.6, 1.4);
+  }
+  45% {
+    opacity: 1;
+    transform: translateY(0) scale(1.35, 0.65);
+  }
+  65% {
+    transform: scale(0.88, 1.15);
+  }
+  82% {
+    transform: scale(1.06, 0.95);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes jelly {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: scale(1.06, 0.94);
+  }
+  40% {
+    transform: translateY(-4px) scale(0.96, 1.05);
+  }
+  60% {
+    transform: scale(1.02, 0.98);
+  }
+}
+
+#finale-sub {
+  margin: 0 0 16px;
+  color: #8c6a52;
+}
+
+.finale-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+#finale-again {
+  background: #c8143f;
+  color: #fff;
+  box-shadow: 0 3px 0 #86092a;
+}
+
+#finale-again:hover {
+  background: #db2a55;
+  box-shadow: 0 4px 0 #86092a;
+}
+
+#finale-close {
+  background: var(--cream-dark);
+  color: var(--cocoa);
+  box-shadow: 0 3px 0 #d8c2a2;
+}
+
+#finale-close:hover {
+  background: #f8ead6;
+}
+
 /* ---------- Small screens ---------- */
 
 @media (max-width: 640px) {
@@ -484,7 +739,11 @@ button.round {
 
 @media (prefers-reduced-motion: reduce) {
   .progress-fill,
-  #banner-next {
+  #banner-next,
+  .finale,
+  .jar-body,
+  .drip,
+  #finale-title .letter {
     animation: none;
   }
 }

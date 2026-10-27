@@ -240,6 +240,49 @@ export class Particles {
     }
   }
 
+  /** A firework: a bright flash, a ring, sprinkles flying out in a circle, then twinkles. */
+  firework(x: number, y: number, colors: string[], scale = 1): void {
+    const main = pick(colors);
+    this.add({ kind: "ring", x, y, size: 6 * scale, grow: 120 * scale, color: main, maxLife: 0.6 });
+    this.add({ kind: "star", x, y, size: 26 * scale, color: "#fff7c2", maxLife: 0.3 });
+    const count = 34;
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2 + rand(-0.08, 0.08);
+      const speed = rand(220, 340) * scale;
+      this.add({
+        kind: i % 3 === 0 ? "dot" : "sprinkle",
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        gravity: 260,
+        drag: 2.2,
+        size: rand(2.2, 3.4) * scale,
+        color: Math.random() < 0.6 ? main : pick(colors),
+        spin: rand(-10, 10),
+        maxLife: rand(1, 1.5),
+      });
+    }
+    for (let i = 0; i < 6; i++) {
+      const angle = rand(0, Math.PI * 2);
+      const d = rand(40, 110) * scale;
+      this.add({
+        kind: "star",
+        x: x + Math.cos(angle) * d,
+        y: y + Math.sin(angle) * d + 20 * scale,
+        size: rand(5, 9) * scale,
+        color: "#fff7c2",
+        spin: rand(-3, 3),
+        maxLife: rand(0.5, 0.9),
+      });
+    }
+  }
+
+  /** A single twinkle star. */
+  twinkle(x: number, y: number, size: number): void {
+    this.add({ kind: "star", x, y, size, color: "#fff7c2", spin: rand(-2, 2), maxLife: rand(0.5, 0.9) });
+  }
+
   /** Confetti cannons from the bottom corners. */
   cannons(width: number, height: number, colors: string[]): void {
     for (const side of [0, 1]) {
