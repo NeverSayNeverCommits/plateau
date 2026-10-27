@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#fff8ef" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Plateau · Pâtisserie</title>
+  </head>
+  <body>
+    <header class="bar">
+      <div class="brand">
+        <h1>Plateau</h1>
+        <span class="tag">pâtisserie</span>
+      </div>
+
+      <div class="level-nav">
+        <button id="prev" class="round" aria-label="Previous level">&#9664;</button>
+        <div class="level-info">
+          <span id="level-number">Level 1 / 7</span>
+          <span id="level-name">Macaron</span>
+        </div>
+        <button id="next" class="round" aria-label="Next level">&#9654;</button>
+      </div>
+
+      <div class="stats">
+        <div class="progress" title="Untangled pastries">
+          <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+          <span id="progress-label">0 / 0</span>
+        </div>
+        <span id="crossings-chip" class="chip bad" title="Crossings"><span class="narrow-only">&#10007;</span><span class="wide-only">Crossings</span> <b id="crossings">0</b></span>
+        <span class="chip" title="Moves"><span class="narrow-only">&#8644;</span><span class="wide-only">Moves</span> <b id="moves">0</b></span>
+        <button id="reset" title="Reset (R)">&#8635;<span class="wide-only"> Reset</span></button>
+        <button id="music" class="round" aria-label="Toggle music">&#9835;</button>
+        <button id="mute" class="round" aria-label="Toggle sound effects">&#128266;</button>
+      </div>
+    </header>
+
+    <main id="board">
+      <div class="awning" aria-hidden="true"></div>
+      <canvas id="canvas"></canvas>
+
+      <div id="intro" class="intro hidden" aria-live="polite">
+        <span id="intro-number">Level 1</span>
+        <span id="intro-name">Macaron</span>
+      </div>
+
+      <div id="banner" class="banner hidden" role="status">
+        <div class="banner-text">
+          <span id="banner-title">Magnifique !</span>
+          <span id="banner-sub">Untangled in 6 moves</span>
+        </div>
+        <button id="banner-next">Next level &rarr;</button>
+      </div>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
